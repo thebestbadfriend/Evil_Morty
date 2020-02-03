@@ -14,7 +14,7 @@ const fetchData = url => {
 
 const listDir = path => {
     return fs.readdirSync(path);
-}
+};
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -33,7 +33,9 @@ client.on('message', msg => {
             switch (command) {
                 case 'joke':
                     const jokeDir = "resources/jokes/";
-                    jokeFiles = listDir(jokeDir);
+                    const jokeFiles = listDir(jokeDir);
+                    const fileSelector = Math.round(Math.random() * jokeFiles.length - 1);
+                    const jokeFile = jokeFiles[fileSelector];
 
                     resolve({
                         name: 'joke',
