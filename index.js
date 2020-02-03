@@ -12,6 +12,10 @@ const fetchData = url => {
         })
 };
 
+const listDir = path => {
+    return fs.readdirSync(path);
+}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
@@ -27,7 +31,10 @@ client.on('message', msg => {
             const command = msg.content.substring(2, msg.content.length);
 
             switch (command) {
-                case 'tell me a joke':
+                case 'joke':
+                    const jokeDir = "resources/jokes/";
+                    jokeFiles = listDir(jokeDir);
+
                     resolve({
                         name: 'joke',
                         message: 'your face',
