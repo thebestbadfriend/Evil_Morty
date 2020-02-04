@@ -28,25 +28,67 @@ client.on('message', msg => {
     function processMessage() {
 
         return new Promise((resolve, reject) => {
-            const command = msg.content.substring(2, msg.content.length);
+            const commandStringStart = 2;
+            var commandStringStop;
 
+            if (msg.content.substring(commandStringStart).includes(':')) {
+                commandStringStop = msg.content.lastIndexOf(':');
+            }
+            else {
+                commandStringStop = msg.content.length;
+            }
+
+            const command = msg.content.substring(commandStringStart, commandStringStop);
+            console.log(command);
             switch (command) {
                 case 'joke':
-                    const jokeDir = "resources/jokes/";
-                    const jokeFiles = listDir(jokeDir);
-                    const fileSelector = Math.round(Math.random() * jokeFiles.length - 1);
-                    const jokeFile = jokeFiles[fileSelector];
+                    try {
+                        const jokeDir = 'resources/jokes/';
+                        const jokeFiles = listDir(jokeDir);
+                        const fileSelector = Math.round(Math.random() * (jokeFiles.length - 1));
+                        const jokeFile = jokeFiles[fileSelector];
+                        const fileContents = fs.readFileSync(jokeDir + jokeFile);
+                        const fileContentsJSON = JSON.parse(fileContents);
+                        var jokeSelector;
+                        var joke;
+                        var validJoke = false;
 
+                        while (!validJoke) {
+                            jokeSelector = Math.round(Math.random() * (fileContentsJSON.length - 1));
+                            joke = fileContentsJSON[jokeSelector];
+
+                            if (joke.body != '' && joke.body.length < 500) {
+                                validJoke = true;
+                            }
+                        }
+
+                        resolve({
+                            responseType: 'joke',
+                            file: jokeFile,
+                            id: joke.id,
+                            message: `${jokeFile}/${joke.id}\n${joke.body}`,
+                            doDelete: false
+                        });
+                    }
+                    catch{
+                        reject({
+                            responseType: 'failure',
+                            message: 'Well... this is awkward. Apparently my maker fucked something up. Try again, maybe?',
+                            doDelete: true
+                        });
+                    }
+                    break;
+                case 'ban joke':
                     resolve({
-                        name: 'joke',
-                        message: 'your face',
+                        responseType: 'edit joke',
+                        message: 'success. Joke is still active, but still... resolve procd',
                         doDelete: false
                     });
-                    break;
+                    break;;
                 default:
                     reject({
-                        name: 'fail',
-                        message: 'Sorry. I don\'t recognize that command',
+                        responseType: 'invalid command',
+                        message: "Sorry. I don't recognize that command",
                         doDelete: true
                     });
                     break;
