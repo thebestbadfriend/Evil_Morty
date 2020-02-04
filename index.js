@@ -79,11 +79,16 @@ client.on('message', msg => {
                     }
                     break;
                 case 'ban joke':
-                    resolve({
-                        responseType: 'edit joke',
-                        message: 'success. Joke is still active, but still... resolve procd',
-                        doDelete: false
-                    });
+                    try {
+                        resolve({
+                            responseType: 'edit joke',
+                            message: 'success. Joke is still active, but still... resolve procd',
+                            doDelete: false
+                        });
+                    }
+                    catch{
+
+                    }
                     break;;
                 default:
                     reject({
@@ -100,6 +105,9 @@ client.on('message', msg => {
     if (msg.content.startsWith('$:')) {
 
         var reply;
+        //for now the .then and the .catch here do the same thing, but
+        //I'm leaving them separate, because I expect I will have
+        //reasons to handle them differently in the near future.
         processMessage().then((response) => {
             reply = channel.send(response.message).then(d_msg => {
                 if (response.doDelete) {
