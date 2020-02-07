@@ -39,6 +39,7 @@ client.on('message', msg => {
             }
 
             const command = msg.content.substring(commandStringStart, commandStringStop);
+            const commandParameters = msg.content.substring(commandStringStop + 1);
             console.log(command);
             switch (command) {
                 case 'joke':
@@ -80,11 +81,30 @@ client.on('message', msg => {
                     break;
                 case 'ban joke':
                     try {
-                        resolve({
-                            responseType: 'edit joke',
-                            message: 'success. Joke is still active, but still... resolve procd',
-                            doDelete: false
-                        });
+                        var jokeDir = 'resources/jokes/';
+                        var jokeFile = commandParameters.substring(0, commandParameters.indexOf('/')).trim();
+                        var jokeFile = jokeDir + jokeFile;
+                        var banID = commandParameters.substring(commandParameters.indexOf('/') + 1).trim();
+
+                        if (fs.existsSync(jokeFile)) {
+                            resolve({
+                                responseType: 'edit joke',
+                                message: jokeFile + " .......... " + banID,
+                                doDelete: false
+                            });
+                        }
+                        else {
+                            var jokeFiles = listDir(jokeDir);
+                            var jokeFilesString = '';
+                            for (var i = 0; i < jokeFiles.length; i++) {
+                                jokeFilesString += jokeFiles[i] + '\n';
+                            }
+                            reject({
+                                responseType: 'failure',
+                                message: 'that file does not exist, available joke files are \n' + jokeFilesString,
+                                doDelete: false
+                            });
+                        }
                     }
                     catch{
 
