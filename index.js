@@ -135,8 +135,6 @@ client.on('message', msg => {
                         }
                     }
                     else {
-                        //for some reason the invalid command rejection successfully deletes the command and the bot's response, but
-                        //this rejection only deletes the bot's response, leaving the errant command visible.
                         reject({
                             responseType: 'failure',
                             message: 'USAGE: $:ban joke: <joke_file>/<joke_id>',
@@ -172,8 +170,13 @@ client.on('message', msg => {
         }).catch((response) => {
             reply = channel.send(response.message).then(d_msg => {
                 if (response.doDelete) {
-                    msg.delete(5000);
-                    d_msg.delete(5000);
+                    try {
+                        msg.delete(5000);
+                        d_msg.delete(5000);
+                    }
+                    catch{
+                        console.log('Could not successfully delete messages');
+                    }
                 }
             });
         });
