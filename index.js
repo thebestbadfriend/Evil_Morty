@@ -40,7 +40,6 @@ client.on('message', msg => {
 
             const command = msg.content.substring(commandStringStart, commandStringStop);
             const commandParameters = msg.content.substring(commandStringStop + 1);
-            console.log(command);
             switch (command) {
                 case 'joke':
                     try {
@@ -67,11 +66,12 @@ client.on('message', msg => {
                             responseType: 'joke',
                             file: jokeFile,
                             id: joke.id,
-                            message: `${jokeFile}/${joke.id}\n${joke.body}`,
+                            message: `${jokeFile}/${jokeSelector}\n${joke.body}`,
                             doDelete: false
                         });
                     }
-                    catch{
+                    catch (err) {
+                        console.log(err);
                         reject({
                             responseType: 'failure',
                             message: 'Well... this is awkward. Apparently my maker fucked something up. Try again, maybe?',
@@ -81,17 +81,32 @@ client.on('message', msg => {
                     break;
                 case 'ban joke':
                     try {
-                        var jokeDir = 'resources/jokes/';
+                        const jokeDir = 'resources/jokes/';
                         var jokeFile = commandParameters.substring(0, commandParameters.indexOf('/')).trim();
-                        var jokeFile = jokeDir + jokeFile;
+                        var jokeFilePath = jokeDir + jokeFile;
                         var banID = commandParameters.substring(commandParameters.indexOf('/') + 1).trim();
 
-                        if (fs.existsSync(jokeFile)) {
-                            resolve({
-                                responseType: 'edit joke',
-                                message: jokeFile + " .......... " + banID,
-                                doDelete: false
-                            });
+                        if (fs.existsSync(jokeFilePath)) {
+                            var jokeFileContents = fs.readFileSync(jokeFilePath);
+                            jokeFileContents = JSON.parse(jokeFileContents);
+
+                            if (banID >= 0 && banID < jokeFileContents.length) {
+                                jokeFileContents[banID].banned = true;
+                                fs.writeFileSync(jokeFilePath, JSON.stringify(jokeFileContents, null, 2));
+                                resolve({
+                                    responseType: 'edit joke',
+                                    message: commandParameters + ' banned.',
+                                    doDelete: false
+                                });
+                            }
+                            else {
+                                console.log(jokeFileContents.length - 1);
+                                reject({
+                                    responseType: 'failure',
+                                    message: 'Invalid joke ID. Please provide joke ID between 0 and ' + (jokeFileContents.length - 1) + ' to ban a joke from ' + jokeFile,
+                                    doDelete: false
+                                });
+                            }
                         }
                         else {
                             var jokeFiles = listDir(jokeDir);
@@ -106,8 +121,13 @@ client.on('message', msg => {
                             });
                         }
                     }
-                    catch{
-
+                    catch (err) {
+                        console.log(err);
+                        reject({
+                            responseType: 'failure',
+                            message: 'Well... this is awkward. Apparently my maker fucked something up. Try again, maybe?',
+                            doDelete: true
+                        });
                     }
                     break;;
                 default:
