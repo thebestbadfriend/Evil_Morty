@@ -41,6 +41,9 @@ client.on('message', msg => {
             const command = msg.content.substring(commandStringStart, commandStringStop);
             const commandParameters = msg.content.substring(commandStringStop + 1);
             switch (command) {
+                //I should add a 'help' case which lists all available commands, each with a brief summary
+                //Maybe also a 'help' case for each command to give a description of the command, its usage,
+                //and if applicable, any arguments which can be passed to it.
                 case 'joke':
                     try {
                         const jokeDir = 'resources/jokes/';
@@ -73,59 +76,70 @@ client.on('message', msg => {
                     catch (err) {
                         console.log(err);
                         reject({
-                            responseType: 'failure',
+                            responseType: 'error',
                             message: 'Well... this is awkward. Apparently my maker fucked something up. Try again, maybe?',
                             doDelete: true
                         });
                     }
                     break;
                 case 'ban joke':
-                    try {
-                        const jokeDir = 'resources/jokes/';
-                        var jokeFile = commandParameters.substring(0, commandParameters.indexOf('/')).trim();
-                        var jokeFilePath = jokeDir + jokeFile;
-                        var banID = commandParameters.substring(commandParameters.indexOf('/') + 1).trim();
+                    if (commandParameters.trim() != '') {
+                        try {
+                            const jokeDir = 'resources/jokes/';
+                            var jokeFile = commandParameters.substring(0, commandParameters.indexOf('/')).trim();
+                            var jokeFilePath = jokeDir + jokeFile;
+                            var banID = commandParameters.substring(commandParameters.indexOf('/') + 1).trim();
 
-                        if (fs.existsSync(jokeFilePath)) {
-                            var jokeFileContents = fs.readFileSync(jokeFilePath);
-                            jokeFileContents = JSON.parse(jokeFileContents);
+                            if (fs.existsSync(jokeFilePath)) {
+                                var jokeFileContents = fs.readFileSync(jokeFilePath);
+                                jokeFileContents = JSON.parse(jokeFileContents);
 
-                            if (banID >= 0 && banID < jokeFileContents.length) {
-                                jokeFileContents[banID].banned = true;
-                                fs.writeFileSync(jokeFilePath, JSON.stringify(jokeFileContents, null, 2));
-                                resolve({
-                                    responseType: 'edit joke',
-                                    message: commandParameters + ' banned.',
-                                    doDelete: false
-                                });
+                                if (banID >= 0 && banID < jokeFileContents.length) {
+                                    jokeFileContents[banID].banned = true;
+                                    fs.writeFileSync(jokeFilePath, JSON.stringify(jokeFileContents, null, 2));
+                                    resolve({
+                                        responseType: 'edit joke',
+                                        message: commandParameters + ' banned.',
+                                        doDelete: false
+                                    });
+                                }
+                                else {
+                                    console.log(jokeFileContents.length - 1);
+                                    reject({
+                                        responseType: 'failure',
+                                        message: 'Invalid joke ID. Please provide joke ID between 0 and ' + (jokeFileContents.length - 1) + ' to ban a joke from ' + jokeFile,
+                                        doDelete: false
+                                    });
+                                }
                             }
                             else {
-                                console.log(jokeFileContents.length - 1);
+                                var jokeFiles = listDir(jokeDir);
+                                var jokeFilesString = '';
+                                for (var i = 0; i < jokeFiles.length; i++) {
+                                    jokeFilesString += jokeFiles[i] + '\n';
+                                }
                                 reject({
                                     responseType: 'failure',
-                                    message: 'Invalid joke ID. Please provide joke ID between 0 and ' + (jokeFileContents.length - 1) + ' to ban a joke from ' + jokeFile,
+                                    message: 'that file does not exist, available joke files are \n' + jokeFilesString,
                                     doDelete: false
                                 });
                             }
                         }
-                        else {
-                            var jokeFiles = listDir(jokeDir);
-                            var jokeFilesString = '';
-                            for (var i = 0; i < jokeFiles.length; i++) {
-                                jokeFilesString += jokeFiles[i] + '\n';
-                            }
+                        catch (err) {
+                            console.log(err);
                             reject({
-                                responseType: 'failure',
-                                message: 'that file does not exist, available joke files are \n' + jokeFilesString,
-                                doDelete: false
+                                responseType: 'error',
+                                message: 'Well... this is awkward. Apparently my maker fucked something up. Try again, maybe?',
+                                doDelete: true
                             });
                         }
                     }
-                    catch (err) {
-                        console.log(err);
+                    else {
+                        //for some reason the invalid command rejection successfully deletes the command and the bot's response, but
+                        //this rejection only deletes the bot's response, leaving the errant command visible.
                         reject({
                             responseType: 'failure',
-                            message: 'Well... this is awkward. Apparently my maker fucked something up. Try again, maybe?',
+                            message: 'USAGE: $:ban joke: <joke_file>/<joke_id>',
                             doDelete: true
                         });
                     }
