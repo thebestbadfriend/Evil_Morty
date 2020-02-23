@@ -41,9 +41,20 @@ client.on('message', msg => {
             const command = msg.content.substring(commandStringStart, commandStringStop);
             const commandParameters = msg.content.substring(commandStringStop + 1);
             switch (command) {
-                //I should add a 'help' case which lists all available commands, each with a brief summary
-                //Maybe also a 'help' case for each command to give a description of the command, its usage,
-                //and if applicable, any arguments which can be passed to it.
+                case 'help':
+                    var helpResponse = `
+`+                  `Evil Morty help:
+`+                  `$:joke
+`+                  `    tells a randomly selected joke
+`+                  `$:ban joke: filename/jokeID
+`+                  `    bans specified joke in the specified file
+`
+                    resolve({
+                        responseType: 'help',
+                        message: helpResponse,
+                        doDelete: false
+                    });
+                    break;
                 case 'joke':
                     try {
                         const jokeDir = 'resources/jokes/';
@@ -59,14 +70,14 @@ client.on('message', msg => {
                         while (!validJoke) {
                             jokeSelector = Math.round(Math.random() * (fileContentsJSON.length - 1));
                             joke = fileContentsJSON[jokeSelector];
-
-                            if (joke.body != '' && joke.body.length < 500) {
+                            
+                            if (joke.body != '' && joke.body.length < 500 && !joke.banned) {
                                 validJoke = true;
                             }
                         }
 
                         resolve({
-                            responseType: 'joke',
+                            responseType: 'tell',
                             file: jokeFile,
                             id: joke.id,
                             message: `${jokeFile}/${jokeSelector}\n${joke.body}`,
@@ -98,7 +109,7 @@ client.on('message', msg => {
                                     jokeFileContents[banID].banned = true;
                                     fs.writeFileSync(jokeFilePath, JSON.stringify(jokeFileContents, null, 2));
                                     resolve({
-                                        responseType: 'edit joke',
+                                        responseType: 'edit',
                                         message: commandParameters + ' banned.',
                                         doDelete: false
                                     });
@@ -141,7 +152,7 @@ client.on('message', msg => {
                             doDelete: true
                         });
                     }
-                    break;;
+                    break;
                 default:
                     reject({
                         responseType: 'invalid command',
