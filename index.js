@@ -176,7 +176,11 @@ client.on('message', msg => {
                     reply.delete(5000);
                 }
             } catch (rejection) {
-                channel.send(rejection.message);
+                const rejectionMessage = await channel.send(rejection.message);
+                if (rejection.doDelete) {
+                    msg.delete(5000);
+                    rejectionMessage.delete(5000);
+                }
             }
         }
 
