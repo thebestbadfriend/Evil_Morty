@@ -167,31 +167,20 @@ client.on('message', msg => {
 
     if (msg.content.startsWith('$:')) {
 
-        var reply;
-        //for now the .then and the .catch here do the same thing, but
-        //I'm leaving them separate, because I expect I will have
-        //reasons to handle them differently in the near future.
-        processMessage().then((response) => {
-            reply = channel.send(response.message).then(d_msg => {
-                if (response.doDelete) {
+        async function respondToMessage() {
+            try {
+                const reply = await processMessage();
+                channel.send(reply.message);
+                if (reply.doDelete) {
                     msg.delete(5000);
-                    d_msg.delete(5000);
+                    reply.delete(5000);
                 }
-            });
-        }).catch((response) => {
-            reply = channel.send(response.message).then(d_msg => {
-                if (response.doDelete) {
-                    try {
-                        msg.delete(5000);
-                        d_msg.delete(5000);
-                    }
-                    catch{
-                        console.log('Could not successfully delete messages');
-                    }
-                }
-            });
-        });
+            } catch (rejection) {
+                channel.send(rejection.message);
+            }
+        }
 
+        respondToMessage();
     }
 
 });
